@@ -1,5 +1,5 @@
 diff --git a/entry/src/main/ets/pages/SettingsOverflowIssuePage.ets b/entry/src/main/ets/pages/SettingsOverflowIssuePage.ets
-index 3684e13..8977b8e 100644
+index 3684e13..5de7942 100644
 --- a/entry/src/main/ets/pages/SettingsOverflowIssuePage.ets
 +++ b/entry/src/main/ets/pages/SettingsOverflowIssuePage.ets
 @@ -8,18 +8,22 @@ struct SettingsOverflowIssuePage {
@@ -46,7 +46,7 @@ index 3684e13..8977b8e 100644
          .fontColor('#989898')
      }
      .width('94%')
-@@ -46,50 +50,61 @@ struct SettingsOverflowIssuePage {
+@@ -46,55 +50,65 @@ struct SettingsOverflowIssuePage {
      Flex({ direction: FlexDirection.Column, alignItems: ItemAlign.Center }) {
        Row() {
          Text('‹')
@@ -134,8 +134,9 @@ index 3684e13..8977b8e 100644
      }
      .width('100%')
      .height('100%')
-@@ -97,4 +112,3 @@ struct SettingsOverflowIssuePage {
-     .id('settings-page-root')
+     .backgroundColor('#F7F8FA')
+-    .id('settings-page-root')
++    .id('settings-page')
    }
  }
 -

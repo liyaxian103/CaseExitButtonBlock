@@ -53,6 +53,7 @@ struct IssueHomePage {
     .padding(0)
     .backgroundColor(Color.White)
     .borderRadius(12)
+    .id(`issue-card-${index}`)
     .onClick(() => {
       router.pushUrl({ url: url });
     })
