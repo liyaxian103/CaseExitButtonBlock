@@ -1,0 +1,141 @@
+diff --git a/entry/src/main/ets/pages/SettingsOverflowIssuePage.ets b/entry/src/main/ets/pages/SettingsOverflowIssuePage.ets
+index 3684e13..8977b8e 100644
+--- a/entry/src/main/ets/pages/SettingsOverflowIssuePage.ets
++++ b/entry/src/main/ets/pages/SettingsOverflowIssuePage.ets
+@@ -8,18 +8,22 @@ struct SettingsOverflowIssuePage {
+     '问卷调查', '服务协议', '关于我们', '清理本地缓存', '当前版本', '检查更新'
+   ];
+ 
++  private lpx2vp(value: number): string {
++    return `${value * 360 / 720}vp`;
++  }
++
+   @Builder
+   private settingItem(title: string, index: number) {
+     Flex({ alignItems: ItemAlign.Center }) {
+-      Column({ space: '2lpx' }) {
++      Column({ space: this.lpx2vp(2) }) {
+         Text(title)
+-          .fontSize('27lpx')
+-          .lineHeight('38lpx')
++          .fontSize(this.lpx2vp(27))
++          .lineHeight(this.lpx2vp(38))
+           .fontColor('#303030')
+         if (index === 1) {
+           Text('免打扰 22:00-次日08:00')
+-            .fontSize('23lpx')
+-            .lineHeight('38lpx')
++            .fontSize(this.lpx2vp(23))
++            .lineHeight(this.lpx2vp(38))
+             .fontColor('#666666')
+         }
+       }
+@@ -27,12 +31,12 @@ struct SettingsOverflowIssuePage {
+       .layoutWeight(1)
+       if (index === 1) {
+         Text('已开启')
+-          .fontSize('27lpx')
+-          .lineHeight('38lpx')
++          .fontSize(this.lpx2vp(27))
++          .lineHeight(this.lpx2vp(38))
+           .fontColor('#989898')
+       }
+       Text(index === 8 || index === 9 ? '' : '›')
+-        .fontSize('32lpx')
++        .fontSize(this.lpx2vp(32))
+         .fontColor('#989898')
+     }
+     .width('94%')
+@@ -46,50 +50,61 @@ struct SettingsOverflowIssuePage {
+     Flex({ direction: FlexDirection.Column, alignItems: ItemAlign.Center }) {
+       Row() {
+         Text('‹')
+-          .fontSize('42lpx')
++          .fontSize(this.lpx2vp(42))
+           .fontColor('#010106')
+           .onClick(() => router.back())
+         Text('设置')
+-          .fontSize('31lpx')
++          .fontSize(this.lpx2vp(31))
+           .fontWeight(500)
+           .fontColor('#010106')
+           .layoutWeight(1)
+           .textAlign(TextAlign.Center)
+         Text('返回')
+-          .fontSize('21lpx')
++          .fontSize(this.lpx2vp(21))
+           .fontColor('#0F4C81')
+           .onClick(() => router.back())
+       }
+-      .height('94lpx')
++      .height(this.lpx2vp(94))
+       .width('100%')
+-      .padding({ left: '28lpx', right: '28lpx' })
++      .padding({ left: this.lpx2vp(28), right: this.lpx2vp(28) })
+       .backgroundColor(Color.White)
+ 
+-      Column() {
+-        ForEach(this.titles, (item: string, index: number) => {
+-          this.settingItem(item, index)
+-          if (index === 3) {
+-            Divider().height(10).color('#F7F8FA')
++      Scroll() {
++        Column() {
++          Column() {
++            ForEach(this.titles, (item: string, index: number) => {
++              this.settingItem(item, index)
++              if (index === 3) {
++                Divider().height(10).color('#F7F8FA')
++              }
++            })
+           }
+-        })
+-      }
+-      .width('100%')
+-      .flexGrow(1)
+-      .backgroundColor(Color.White)
+-      .id('settings-function-menu')
++          .width('100%')
++          .flexGrow(1)
++          .background(Color.White)
++          .id('settings-function-menu')
+ 
+-      Row() {
+-        Text('退出登录')
+-          .fontSize(16)
+-          .fontColor('#393939')
++          Row() {
++            Text('退出登录')
++              .fontSize(16)
++              .fontColor('#393939')
++          }
++          .backgroundColor(Color.White)
++          .justifyContent(FlexAlign.Center)
++          .width('90%')
++          .height(this.lpx2vp(84))
++          .border({ width: 1, color: '#AEAEAE', radius: 4 })
++          .margin({ bottom: this.lpx2vp(35), top: this.lpx2vp(35) })
++          .id('settings-logout-button')
++          .onClick(() => router.back())
++        }
++        .width('100%')
++        .constraintSize({ minHeight: '100%' })
++        .backgroundColor(Color.White)
+       }
++      .width('100%')
++      .layoutWeight(1)
+       .backgroundColor(Color.White)
+-      .justifyContent(FlexAlign.Center)
+-      .width('90%')
+-      .height('84lpx')
+-      .border({ width: 1, color: '#AEAEAE', radius: 4 })
+-      .margin({ bottom: '35lpx', top: '35lpx' })
+-      .id('settings-logout-button')
+     }
+     .width('100%')
+     .height('100%')
+@@ -97,4 +112,3 @@ struct SettingsOverflowIssuePage {
+     .id('settings-page-root')
+   }
+ }
+-

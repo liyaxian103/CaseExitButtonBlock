@@ -1,0 +1,36 @@
+{
+  "app": {
+    "signingConfigs": [],
+    "products": [
+      {
+        "name": "default",
+        "compatibleSdkVersion": "5.0.5(17)",
+        "targetSdkVersion": "6.0.0(20)",
+        "runtimeOS": "HarmonyOS",
+        "bundleName": "com.example.fyxissueuioriginal",
+        "bundleType": "app",
+        "vendor": "example",
+        "versionCode": 1,
+        "versionName": "1.0.0",
+        "icon": "$media:app_icon",
+        "label": "$string:app_name",
+        "buildOption": {
+          "strictMode": { "useNormalizedOHMUrl": true }
+        }
+      }
+    ],
+    "buildModeSet": [
+      { "name": "debug" },
+      { "name": "release" }
+    ]
+  },
+  "modules": [
+    {
+      "name": "entry",
+      "srcPath": "./entry",
+      "targets": [
+        { "name": "default", "applyToProducts": ["default"] }
+      ]
+    }
+  ]
+}

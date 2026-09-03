@@ -1,0 +1,13 @@
+{
+  "modelVersion": "5.0.0",
+  "name": "fyx-issue-ui-demo-original",
+  "version": "1.0.0",
+  "description": "Standalone reproductions of the original non-login fyxapphos UI issues",
+  "main": "",
+  "author": "",
+  "license": "UNLICENSED",
+  "dependencies": {},
+  "devDependencies": {},
+  "dynamicDependencies": {}
+}
+

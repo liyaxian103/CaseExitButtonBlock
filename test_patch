@@ -1,0 +1,227 @@
+diff --git a/entry/build-profile.json5 b/entry/build-profile.json5
+index bcc44dc..6fa252f 100644
+--- a/entry/build-profile.json5
++++ b/entry/build-profile.json5
+@@ -12,7 +12,7 @@
+     }
+   ],
+   "targets": [
+-    { "name": "default" }
++    { "name": "default" },
++    { "name": "ohosTest" }
+   ]
+ }
+-
+diff --git a/entry/src/main/ets/pages/IssueHomePage.ets b/entry/src/main/ets/pages/IssueHomePage.ets
+index 7148304..cf62a71 100644
+--- a/entry/src/main/ets/pages/IssueHomePage.ets
++++ b/entry/src/main/ets/pages/IssueHomePage.ets
+@@ -53,6 +53,7 @@ struct IssueHomePage {
+     .padding(0)
+     .backgroundColor(Color.White)
+     .borderRadius(12)
++    .id(`issue-card-${index}`)
+     .onClick(() => {
+       router.pushUrl({ url: url });
+     })
+diff --git a/entry/src/ohosTest/ets/test/List.test.ets b/entry/src/ohosTest/ets/test/List.test.ets
+new file mode 100644
+index 0000000..e80d68e
+--- /dev/null
++++ b/entry/src/ohosTest/ets/test/List.test.ets
+@@ -0,0 +1,7 @@
++import failToPassTest from './failtopass.test';
++import passToPassTest from './passtopass.test';
++
++export default function testsuite() {
++  passToPassTest();
++  failToPassTest();
++}
+diff --git a/entry/src/ohosTest/ets/test/TestHelper.ets b/entry/src/ohosTest/ets/test/TestHelper.ets
+new file mode 100644
+index 0000000..4d56b33
+--- /dev/null
++++ b/entry/src/ohosTest/ets/test/TestHelper.ets
+@@ -0,0 +1,67 @@
++import { Want } from '@kit.AbilityKit';
++import { abilityDelegatorRegistry, Component, Driver, ON } from '@kit.TestKit';
++import { expect } from '@ohos/hypium';
++
++export async function startAbility(driver: Driver, bundleName: string): Promise<void> {
++  const want: Want = { bundleName: bundleName, abilityName: 'EntryAbility' };
++  await abilityDelegatorRegistry.getAbilityDelegator().startAbility(want);
++  await driver.waitForIdle(2000, 3000);
++}
++
++export async function openSettingsPage(driver: Driver): Promise<void> {
++  const settingsCard = await driver.findComponent(ON.id('issue-card-01'));
++  expect(settingsCard !== null).assertTrue();
++  if (settingsCard !== null) {
++    await settingsCard.click();
++    await driver.waitForIdle(2000, 3000);
++  }
++}
++
++export async function findRequiredText(driver: Driver, text: string): Promise<Component> {
++  const component = await driver.findComponent(ON.text(text));
++  expect(component !== null).assertTrue();
++  return component;
++}
++
++// This helper checks only whether the logout button exists and is reachable.
++// It intentionally does not inspect the button's position relative to the menu.
++export async function findLogoutButton(driver: Driver, bundleName: string): Promise<Component> {
++  let component = await driver.findComponent(ON.text('退出登录'));
++  if (component !== null) {
++    return component;
++  }
++
++  const window = await driver.findWindow({ bundleName: bundleName, active: true });
++  const windowBounds = await window.getBounds();
++  const centerX = Math.round((windowBounds.left + windowBounds.right) / 2);
++  const startY = Math.round(windowBounds.bottom - 80);
++  const endY = Math.round(windowBounds.top + 80);
++
++  for (let index = 0; index < 5; index++) {
++    await driver.swipe(centerX, startY, centerX, endY, 800);
++    await driver.waitForIdle(1000, 2000);
++    component = await driver.findComponent(ON.text('退出登录'));
++    if (component !== null) {
++      return component;
++    }
++  }
++
++  expect(false).assertTrue();
++  return component;
++}
++
++export async function verifyMenuAndLogoutDoNotOverlap(driver: Driver, bundleName: string): Promise<void> {
++  const logout = await findLogoutButton(driver, bundleName);
++  const lastMenuItem = await findRequiredText(driver, '检查更新');
++  const window = await driver.findWindow({ bundleName: bundleName, active: true });
++  const windowBounds = await window.getBounds();
++  const logoutBounds = await logout.getBounds();
++  const lastMenuItemBounds = await lastMenuItem.getBounds();
++
++  // This is the fail-to-pass assertion: it fails on the overlapping layout
++  // and passes when the logout button is below the final menu item.
++  console.info(`last menu item: ${JSON.stringify(lastMenuItemBounds)}, logout: ${JSON.stringify(logoutBounds)}`);
++  expect(lastMenuItemBounds.bottom <= logoutBounds.top).assertTrue();
++  expect(logoutBounds.top >= windowBounds.top).assertTrue();
++  expect(logoutBounds.bottom <= windowBounds.bottom).assertTrue();
++}
+diff --git a/entry/src/ohosTest/ets/test/failtopass.test.ets b/entry/src/ohosTest/ets/test/failtopass.test.ets
+new file mode 100644
+index 0000000..016dc83
+--- /dev/null
++++ b/entry/src/ohosTest/ets/test/failtopass.test.ets
+@@ -0,0 +1,38 @@
++import { afterAll, beforeAll, describe, expect, it, Level } from '@ohos/hypium';
++import { abilityDelegatorRegistry, Driver } from '@kit.TestKit';
++import {
++  openSettingsPage,
++  startAbility,
++  verifyMenuAndLogoutDoNotOverlap
++} from './TestHelper';
++
++export default function failToPassTest() {
++  describe('SettingsFailToPassTest', () => {
++    let driver: Driver;
++    let bundleName: string;
++
++    beforeAll(async () => {
++      driver = Driver.create();
++      bundleName = abilityDelegatorRegistry.getArguments().bundleName;
++      await startAbility(driver, bundleName);
++      await openSettingsPage(driver);
++    })
++
++    afterAll(async () => {
++      await driver.waitForIdle(2000, 3000);
++    })
++
++    it('should_not_overlap_menu_and_logout_on_current_device_size', Level.LEVEL1, async (done: Function) => {
++      try {
++        const window = await driver.findWindow({ bundleName: bundleName, active: true });
++        const bounds = await window.getBounds();
++        console.info(`verify settings layout at ${bounds.right - bounds.left}x${bounds.bottom - bounds.top}px`);
++        await verifyMenuAndLogoutDoNotOverlap(driver, bundleName);
++      } catch (e) {
++        console.error('should_not_overlap_menu_and_logout_on_current_device_size error: ' + JSON.stringify(e));
++        expect(false).assertTrue();
++      }
++      done();
++    })
++  })
++}
+diff --git a/entry/src/ohosTest/ets/test/passtopass.test.ets b/entry/src/ohosTest/ets/test/passtopass.test.ets
+new file mode 100644
+index 0000000..72e80c7
+--- /dev/null
++++ b/entry/src/ohosTest/ets/test/passtopass.test.ets
+@@ -0,0 +1,34 @@
++import { afterAll, beforeAll, describe, expect, it, Level } from '@ohos/hypium';
++import { abilityDelegatorRegistry, Driver } from '@kit.TestKit';
++import { findLogoutButton, openSettingsPage, startAbility } from './TestHelper';
++
++export default function passToPassTest() {
++  describe('SettingsPassToPassTest', () => {
++    let driver: Driver;
++    let bundleName: string;
++
++    beforeAll(async () => {
++      driver = Driver.create();
++      bundleName = abilityDelegatorRegistry.getArguments().bundleName;
++      await startAbility(driver, bundleName);
++      await openSettingsPage(driver);
++    })
++
++    afterAll(async () => {
++      await driver.waitForIdle(2000, 3000);
++    })
++
++    it('should_have_logout_button_before_and_after_fix', Level.LEVEL0, async (done: Function) => {
++      try {
++        // Pass-to-pass checks existence only. It must not assert whether the
++        // logout button overlaps the menu.
++        const logout = await findLogoutButton(driver, bundleName);
++        expect(logout !== null).assertTrue();
++      } catch (e) {
++        console.error('should_have_logout_button_before_and_after_fix error: ' + JSON.stringify(e));
++        expect(false).assertTrue();
++      }
++      done();
++    })
++  })
++}
+diff --git a/entry/src/ohosTest/module.json5 b/entry/src/ohosTest/module.json5
+new file mode 100644
+index 0000000..699613a
+--- /dev/null
++++ b/entry/src/ohosTest/module.json5
+@@ -0,0 +1,9 @@
++{
++  "module": {
++    "name": "entry_test",
++    "type": "feature",
++    "deviceTypes": ["phone", "tablet", "2in1"],
++    "deliveryWithInstall": true,
++    "installationFree": false
++  }
++}
+diff --git a/oh-package.json5 b/oh-package.json5
+index 77a9f46..db616fa 100644
+--- a/oh-package.json5
++++ b/oh-package.json5
+@@ -7,7 +7,9 @@
+   "author": "",
+   "license": "UNLICENSED",
+   "dependencies": {},
+-  "devDependencies": {},
++  "devDependencies": {
++    "@ohos/hypium": "1.0.25",
++    "@ohos/hamock": "1.0.0"
++  },
+   "dynamicDependencies": {}
+ }
+-

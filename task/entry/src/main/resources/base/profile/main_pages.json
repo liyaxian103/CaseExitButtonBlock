@@ -1,0 +1,14 @@
+{
+  "src": [
+    "pages/IssueHomePage",
+    "pages/SettingsOverflowIssuePage",
+    "pages/ServiceScaleIssuePage",
+    "pages/AgreementOverflowIssuePage",
+    "pages/AppearanceOverlapIssuePage",
+    "pages/ServiceTabGapIssuePage"
+  ],
+  "window": {
+    "designWidth": 720,
+    "autoDesignWidth": false
+  }
+}
