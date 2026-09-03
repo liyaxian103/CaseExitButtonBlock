@@ -7,9 +7,7 @@
   "author": "",
   "license": "UNLICENSED",
   "dependencies": {},
-  "devDependencies": {
-    "@ohos/hypium": "1.0.25",
-    "@ohos/hamock": "1.0.0"
-  },
+  "devDependencies": {},
   "dynamicDependencies": {}
 }
+
