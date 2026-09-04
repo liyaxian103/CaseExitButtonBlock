@@ -94,7 +94,7 @@ struct SettingsOverflowIssuePage {
     .width('100%')
     .height('100%')
     .backgroundColor('#F7F8FA')
-    .id('settings-page-root')
+    .id('settings-page')
   }
 }
 

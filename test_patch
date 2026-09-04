@@ -81,10 +81,10 @@ index 0000000..e80d68e
 +}
 diff --git a/entry/src/ohosTest/ets/test/TestHelper.ets b/entry/src/ohosTest/ets/test/TestHelper.ets
 new file mode 100644
-index 0000000..cd8d147
+index 0000000..66bf74f
 --- /dev/null
 +++ b/entry/src/ohosTest/ets/test/TestHelper.ets
-@@ -0,0 +1,111 @@
+@@ -0,0 +1,130 @@
 +import { Want } from '@kit.AbilityKit';
 +import { window } from '@kit.ArkUI';
 +import { abilityDelegatorRegistry, Component, Driver, ON } from '@kit.TestKit';
@@ -94,8 +94,6 @@ index 0000000..cd8d147
 +export const LOGOUT_LABEL: string = '退出登录';
 +export const LAST_MENU_LABEL: string = '检查更新';
 +
-+// Independent oracle: the accepted straight-phone design is 720 lpx / 360 vp.
-+// Do not calculate this from the current window width or the production helper.
 +interface FontSample {
 +  text: string;
 +  fontSizeVp: number;
@@ -114,7 +112,6 @@ index 0000000..cd8d147
 +}
 +
 +export async function openSettingsPage(driver: Driver): Promise<void> {
-+  // Re-enter the page to reset scrolling between suites and individual checks.
 +  if (await driver.findComponent(ON.text('设置')) !== null) {
 +    await driver.pressBack();
 +    await driver.waitForIdle(1000, 2000);
@@ -133,8 +130,6 @@ index 0000000..cd8d147
 +  return component;
 +}
 +
-+// This helper checks only whether the logout button exists and is reachable.
-+// It intentionally does not inspect the button's position relative to the menu.
 +export async function findLogoutButton(driver: Driver, bundleName: string): Promise<Component> {
 +  let component = await driver.findComponent(ON.text(LOGOUT_LABEL));
 +  if (component !== null) {
@@ -160,13 +155,38 @@ index 0000000..cd8d147
 +  return component;
 +}
 +
-+export async function verifyMenuAndLogoutDoNotOverlap(driver: Driver, bundleName: string): Promise<void> {
-+  await findLogoutButton(driver, bundleName);
++export async function scrollSettingsToBottom(driver: Driver): Promise<void> {
++  const scrollables = await driver.findComponents(ON.scrollable(true));
++  console.info(`settings scrollable areas: ${scrollables.length}`);
++  for (const scrollable of scrollables) {
++    await scrollable.scrollToBottom(800);
++    await driver.waitForIdle(1000, 2000);
++  }
++}
++
++export async function verifyMenuAndLogoutDoNotOverlap(driver: Driver): Promise<void> {
++  try {
++    await scrollSettingsToBottom(driver);
++  } catch (e) {
++    console.warn('Could not confirm scroll bottom; checking current bounds: ' + JSON.stringify(e));
++  }
++  await driver.waitForIdle(1000, 2000);
 +  const logout = await driver.findComponent(ON.id('settings-logout-button'));
 +  const lastMenuItem = await driver.findComponent(ON.id('settings-menu-item-10'));
++  if (logout === null || lastMenuItem === null) {
++    throw new Error('LAYOUT_CHECK_ERROR: cannot locate logout button or last menu item; overlap is unknown');
++  }
 +  const logoutBounds = await logout.getBounds();
 +  const lastMenuItemBounds = await lastMenuItem.getBounds();
 +
++  console.info(`layout check: logout=${JSON.stringify(logoutBounds)}, ` +
++    `last menu item=${JSON.stringify(lastMenuItemBounds)}`);
++  if (!Number.isFinite(logoutBounds.top) || !Number.isFinite(logoutBounds.bottom) ||
++    !Number.isFinite(lastMenuItemBounds.top) || !Number.isFinite(lastMenuItemBounds.bottom) ||
++    logoutBounds.bottom <= logoutBounds.top || lastMenuItemBounds.bottom <= lastMenuItemBounds.top) {
++    throw new Error('LAYOUT_CHECK_ERROR: invalid component bounds; overlap is unknown');
++  }
++  console.info(`logout/menu vertical gap: ${logoutBounds.top - lastMenuItemBounds.bottom}px`);
 +  expect(logoutBounds.top >= lastMenuItemBounds.bottom).assertTrue();
 +}
 +
@@ -179,8 +199,7 @@ index 0000000..cd8d147
 +  for (const sample of FONT_SAMPLES) {
 +    const text = await findRequiredText(driver, sample.text);
 +    const bounds = await text.getBounds();
-+    // These Text nodes have intrinsic width (no width/layoutWeight/padding).
-+    // Compare px with px; explicit vp also avoids the number/default-fp ambiguity.
++
 +    const expected = measure.measureTextSize({
 +      textContent: sample.text,
 +      fontSize: `${sample.fontSizeVp}vp`,
@@ -198,10 +217,10 @@ index 0000000..cd8d147
 +}
 diff --git a/entry/src/ohosTest/ets/test/failtopass.test.ets b/entry/src/ohosTest/ets/test/failtopass.test.ets
 new file mode 100644
-index 0000000..e9ce0a8
+index 0000000..7c1ff59
 --- /dev/null
 +++ b/entry/src/ohosTest/ets/test/failtopass.test.ets
-@@ -0,0 +1,63 @@
+@@ -0,0 +1,64 @@
 +import { afterAll, beforeAll, describe, expect, it, Level } from '@ohos/hypium';
 +import { abilityDelegatorRegistry, Driver } from '@kit.TestKit';
 +import {
@@ -241,12 +260,13 @@ index 0000000..e9ce0a8
 +        const window = await driver.findWindow({ bundleName: bundleName, active: true });
 +        const bounds = await window.getBounds();
 +        console.info(`verify settings layout at ${bounds.right - bounds.left}x${bounds.bottom - bounds.top}px`);
-+        await verifyMenuAndLogoutDoNotOverlap(driver, bundleName);
++        await verifyMenuAndLogoutDoNotOverlap(driver);
 +      } catch (e) {
 +        console.error('should_show_logout_under_menu error: ' + JSON.stringify(e));
 +        expect(false).assertTrue();
++      } finally {
++        done();
 +      }
-+      done();
 +    })
 +
 +    it('should_keep_font_visual_size', Level.LEVEL1, async (done: Function) => {
